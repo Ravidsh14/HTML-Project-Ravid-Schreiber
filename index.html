@@ -5,8 +5,435 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#10131b">
     <title>Fourier Lab — Explore the 2D FFT</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <style>
+:root {
+  color-scheme: dark;
+  --page: #10131b;
+  --panel: #171b25;
+  --panel-light: #1c212c;
+  --line: #2a303d;
+  --muted: #8c94a5;
+  --text: #f0f2f6;
+  --accent: #c4f06b;
+  --mono: "DM Mono", "Courier New", monospace;
+  --display: "Space Grotesk", "Arial", sans-serif;
+  --body: "DM Sans", "Arial", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.site-header, main, footer { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+.site-header { height: 76px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; gap: 10px; align-items: center; color: var(--text); text-decoration: none; font: 600 13px var(--mono); letter-spacing: .07em; }
+.brand-mark { width: 27px; height: 27px; display: grid; place-items: center; background: var(--accent); color: #14180f; border-radius: 7px; font: 700 16px var(--display); }
+.brand-muted { color: var(--muted); }
+.header-note, .eyebrow, .card-tag, .upload-size, footer { font-family: var(--mono); letter-spacing: .08em; }
+.header-note { color: var(--muted); font-size: 10px; }
+
+.intro { padding: 66px 0 42px; max-width: 700px; }
+.eyebrow { margin: 0 0 14px; color: var(--accent); font-size: 10px; }
+h1, h2, p { margin-top: 0; }
+h1 { margin-bottom: 16px; font: 600 clamp(42px, 7vw, 72px)/.98 var(--display); letter-spacing: -.055em; }
+h1 span { color: #a4adbf; }
+.intro-copy { max-width: 470px; margin-bottom: 0; color: #a4adbf; font-size: 16px; line-height: 1.65; }
+
+.workspace { padding-bottom: 78px; }
+.upload-zone { position: relative; display: flex; align-items: center; min-height: 96px; padding: 20px 24px; gap: 17px; border: 1px dashed #464e5e; border-radius: 12px; background: #151923; cursor: pointer; transition: border-color .2s, background .2s; }
+.upload-zone:hover, .upload-zone.is-dragging { border-color: var(--accent); background: #1a201d; }
+.upload-zone input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.upload-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: #242a35; color: var(--accent); font-size: 25px; }
+.upload-copy { display: grid; gap: 5px; font-size: 13px; }
+.upload-copy strong { font-size: 14px; font-weight: 600; }
+.upload-copy > span { color: var(--muted); }
+.browse-link { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.upload-size { margin-left: auto; color: var(--muted); font-size: 9px; line-height: 1.7; text-align: right; }
+.status { min-height: 19px; margin: 11px 1px 22px; color: var(--muted); font-size: 12px; }
+.status.error { color: #ff9a9a; }
+
+.visualization-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.visual-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.card-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 27px; margin-bottom: 13px; }
+.card-heading > div { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.step-number { color: #687184; font: 10px var(--mono); }
+.card-heading h2 { overflow: hidden; margin: 0; font: 500 15px var(--display); text-overflow: ellipsis; white-space: nowrap; }
+.card-tag { flex: 0 0 auto; color: #8e97a9; font-size: 8px; }
+.canvas-wrap { position: relative; overflow: hidden; aspect-ratio: 1; border-radius: 7px; background: #10131b; }
+.canvas-wrap canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.canvas-empty { position: absolute; inset: 0; display: grid; place-items: center; color: #596173; font: 10px var(--mono); }
+.has-image .canvas-empty { display: none; }
+.card-caption { min-height: 34px; margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+
+.filter-panel { margin-top: 44px; padding: 24px; border: 1px solid var(--line); border-radius: 14px; background: #141821; }
+.filter-header { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+.filter-header .eyebrow { margin-bottom: 8px; }
+.filter-header h2, .explanation h2 { margin: 0; font: 500 24px var(--display); letter-spacing: -.035em; }
+.filter-description { margin: 0 0 3px; color: var(--muted); font-size: 12px; }
+.filter-controls { display: grid; grid-template-columns: 1fr 1.3fr; align-items: center; gap: 38px; margin: 25px 0 24px; padding: 17px 18px; border-radius: 9px; background: var(--panel); }
+.filter-mode { display: flex; gap: 7px; margin: 0; padding: 0; border: 0; }
+.filter-mode input { position: absolute; opacity: 0; pointer-events: none; }
+.filter-mode label span { display: block; padding: 9px 13px; border: 1px solid transparent; border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer; }
+.filter-mode input:checked + span { border-color: #3a4430; background: #242b21; color: var(--accent); }
+.filter-mode input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.radius-control { display: grid; gap: 8px; }
+.radius-label { display: flex; justify-content: space-between; color: #d3d7e0; font-size: 12px; }
+.radius-label output { color: var(--accent); font-family: var(--mono); font-size: 11px; }
+input[type="range"] { width: 100%; height: 4px; accent-color: var(--accent); cursor: pointer; }
+.range-ends { display: flex; justify-content: space-between; color: #788194; font: 9px var(--mono); }
+.filter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.filter-grid .visual-card { background: var(--panel); }
+.explanation { display: grid; grid-template-columns: .8fr 1.2fr; gap: 60px; padding: 50px 0 75px; border-top: 1px solid var(--line); }
+.explanation .eyebrow { margin-bottom: 12px; }
+.explanation h2 { max-width: 250px; line-height: 1.2; }
+.explanation-copy > p { margin-bottom: 24px; color: #a4adbf; font-size: 13px; line-height: 1.8; }
+.explanation-copy strong { color: var(--text); font-weight: 600; }
+.guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px; }
+.guide-grid > div { display: flex; align-items: flex-start; gap: 12px; }
+.guide-grid p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.guide-symbol { flex: 0 0 23px; height: 23px; margin-top: 2px; border: 1px solid #49515f; border-radius: 6px; }
+.magnitude-symbol { background: radial-gradient(circle, #f3f5ec 0, #9fb27a 20%, #414b35 42%, #1b2029 72%); }
+.phase-symbol { background: linear-gradient(135deg, #f3f5ec, #aeb8a1 40%, #222833); }
+footer { display: flex; justify-content: space-between; padding: 18px 0 25px; border-top: 1px solid var(--line); color: #737c8e; font-size: 9px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .visualization-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .visualization-grid .visual-card:last-child { grid-column: span 2; }
+  .visualization-grid .visual-card:last-child .canvas-wrap { max-width: 420px; }
+  .explanation { grid-template-columns: 1fr; gap: 24px; }
+}
+
+@media (max-width: 520px) {
+  .site-header, main, footer { width: min(100% - 32px, 1120px); }
+  .site-header { height: 64px; }
+  .header-note { max-width: 110px; text-align: right; font-size: 8px; line-height: 1.6; }
+  .intro { padding: 49px 0 32px; }
+  h1 { font-size: 52px; }
+  .intro-copy { font-size: 14px; }
+  .upload-zone { min-height: 86px; padding: 15px; gap: 11px; }
+  .upload-icon { width: 37px; height: 37px; }
+  .upload-copy strong { font-size: 12px; }
+  .upload-copy { font-size: 10px; }
+  .upload-size { font-size: 7px; }
+  .visualization-grid { gap: 10px; }
+  .visual-card { padding: 10px; }
+  .card-heading { align-items: flex-start; min-height: 34px; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+  .card-heading h2 { font-size: 13px; }
+  .card-tag { font-size: 7px; }
+  .card-caption { min-height: 45px; font-size: 10px; }
+  .filter-panel { margin-top: 30px; padding: 15px; }
+  .filter-header { display: block; }
+  .filter-header h2 { font-size: 21px; }
+  .filter-description { margin-top: 8px; font-size: 11px; }
+  .filter-controls { grid-template-columns: 1fr; gap: 15px; margin: 19px 0; padding: 13px; }
+  .filter-mode label span { padding: 8px 11px; }
+  .filter-grid { gap: 10px; }
+  .filter-grid .visual-card { padding: 10px; }
+  .filter-grid .card-heading { min-height: 50px; }
+  .filter-grid .card-heading > div { gap: 5px; }
+  .filter-grid .card-heading h2 { font-size: 11px; white-space: normal; }
+  .filter-grid .card-tag { font-size: 6px; }
+  .explanation { padding: 38px 0 50px; }
+  .explanation h2 { font-size: 22px; }
+  .guide-grid { grid-template-columns: 1fr; gap: 15px; }
+  footer { gap: 16px; font-size: 7px; }
+  footer span:last-child { text-align: right; }
+}
+    </style>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+(() => {
+  "use strict";
+
+  const SIZE = 256;
+  const PIXELS = SIZE * SIZE;
+  const input = document.getElementById("image-input");
+  const dropZone = document.getElementById("drop-zone");
+  const status = document.getElementById("status");
+  const radiusSlider = document.getElementById("radius-slider");
+  const radiusValue = document.getElementById("radius-value");
+  const filterTag = document.getElementById("filter-tag");
+  const filteredCaption = document.getElementById("filtered-caption");
+  const canvases = {
+    original: document.getElementById("original-canvas"),
+    magnitude: document.getElementById("magnitude-canvas"),
+    phase: document.getElementById("phase-canvas"),
+    filtered: document.getElementById("filtered-canvas"),
+    reconstructed: document.getElementById("reconstructed-canvas")
+  };
+  const contexts = Object.fromEntries(
+    Object.entries(canvases).map(([name, canvas]) => [name, canvas.getContext("2d", { willReadFrequently: true })])
+  );
+  const scratch = document.createElement("canvas");
+  scratch.width = SIZE;
+  scratch.height = SIZE;
+  const scratchContext = scratch.getContext("2d", { willReadFrequently: true });
+
+  let sourceReal = null;
+  let sourceImag = null;
+  let shiftedReal = null;
+  let shiftedImag = null;
+  let magnitudeScale = 1;
+
+  function fft1d(real, imag, inverse) {
+    const n = real.length;
+    for (let i = 1, j = 0; i < n; i += 1) {
+      let bit = n >> 1;
+      while (j & bit) {
+        j ^= bit;
+        bit >>= 1;
+      }
+      j ^= bit;
+      if (i < j) {
+        [real[i], real[j]] = [real[j], real[i]];
+        [imag[i], imag[j]] = [imag[j], imag[i]];
+      }
+    }
+
+    for (let length = 2; length <= n; length *= 2) {
+      const angle = (inverse ? 2 : -2) * Math.PI / length;
+      const stepReal = Math.cos(angle);
+      const stepImag = Math.sin(angle);
+      const half = length >> 1;
+      for (let start = 0; start < n; start += length) {
+        let twiddleReal = 1;
+        let twiddleImag = 0;
+        for (let offset = 0; offset < half; offset += 1) {
+          const even = start + offset;
+          const odd = even + half;
+          const oddReal = real[odd] * twiddleReal - imag[odd] * twiddleImag;
+          const oddImag = real[odd] * twiddleImag + imag[odd] * twiddleReal;
+          const evenReal = real[even];
+          const evenImag = imag[even];
+          real[even] = evenReal + oddReal;
+          imag[even] = evenImag + oddImag;
+          real[odd] = evenReal - oddReal;
+          imag[odd] = evenImag - oddImag;
+
+          const nextReal = twiddleReal * stepReal - twiddleImag * stepImag;
+          twiddleImag = twiddleReal * stepImag + twiddleImag * stepReal;
+          twiddleReal = nextReal;
+        }
+      }
+    }
+
+    if (inverse) {
+      for (let i = 0; i < n; i += 1) {
+        real[i] /= n;
+        imag[i] /= n;
+      }
+    }
+  }
+
+  function fft2d(real, imag, inverse) {
+    const lineReal = new Float64Array(SIZE);
+    const lineImag = new Float64Array(SIZE);
+    for (let y = 0; y < SIZE; y += 1) {
+      const row = y * SIZE;
+      for (let x = 0; x < SIZE; x += 1) {
+        lineReal[x] = real[row + x];
+        lineImag[x] = imag[row + x];
+      }
+      fft1d(lineReal, lineImag, inverse);
+      for (let x = 0; x < SIZE; x += 1) {
+        real[row + x] = lineReal[x];
+        imag[row + x] = lineImag[x];
+      }
+    }
+    for (let x = 0; x < SIZE; x += 1) {
+      for (let y = 0; y < SIZE; y += 1) {
+        const index = y * SIZE + x;
+        lineReal[y] = real[index];
+        lineImag[y] = imag[index];
+      }
+      fft1d(lineReal, lineImag, inverse);
+      for (let y = 0; y < SIZE; y += 1) {
+        const index = y * SIZE + x;
+        real[index] = lineReal[y];
+        imag[index] = lineImag[y];
+      }
+    }
+  }
+
+  function centerSpectrum(real, imag) {
+    const centeredReal = new Float64Array(PIXELS);
+    const centeredImag = new Float64Array(PIXELS);
+    const half = SIZE >> 1;
+    for (let y = 0; y < SIZE; y += 1) {
+      for (let x = 0; x < SIZE; x += 1) {
+        const from = y * SIZE + x;
+        const to = ((y + half) % SIZE) * SIZE + ((x + half) % SIZE);
+        centeredReal[to] = real[from];
+        centeredImag[to] = imag[from];
+      }
+    }
+    return [centeredReal, centeredImag];
+  }
+
+  function uncenterSpectrum(real, imag) {
+    return centerSpectrum(real, imag);
+  }
+
+  function spectrumMagnitude(real, imag, scale) {
+    const pixels = new Uint8ClampedArray(PIXELS * 4);
+    for (let i = 0; i < PIXELS; i += 1) {
+      const value = Math.log1p(Math.hypot(real[i], imag[i])) / scale * 255;
+      const offset = i * 4;
+      pixels[offset] = value;
+      pixels[offset + 1] = value;
+      pixels[offset + 2] = value;
+      pixels[offset + 3] = 255;
+    }
+    return new ImageData(pixels, SIZE, SIZE);
+  }
+
+  function drawPhase(real, imag) {
+    const pixels = new Uint8ClampedArray(PIXELS * 4);
+    for (let i = 0; i < PIXELS; i += 1) {
+      const value = (Math.atan2(imag[i], real[i]) + Math.PI) / (2 * Math.PI) * 255;
+      const offset = i * 4;
+      pixels[offset] = value;
+      pixels[offset + 1] = value;
+      pixels[offset + 2] = value;
+      pixels[offset + 3] = 255;
+    }
+    contexts.phase.putImageData(new ImageData(pixels, SIZE, SIZE), 0, 0);
+  }
+
+  function applyFilter() {
+    if (!shiftedReal) return;
+    const radius = Number(radiusSlider.value);
+    const radiusSquared = radius * radius;
+    const highPass = document.querySelector('input[name="filter-mode"]:checked').value === "high";
+    const filteredReal = new Float64Array(PIXELS);
+    const filteredImag = new Float64Array(PIXELS);
+    const filteredCanvasReal = new Float64Array(PIXELS);
+    const filteredCanvasImag = new Float64Array(PIXELS);
+    const center = SIZE >> 1;
+
+    for (let y = 0; y < SIZE; y += 1) {
+      const dy = y - center;
+      for (let x = 0; x < SIZE; x += 1) {
+        const dx = x - center;
+        const index = y * SIZE + x;
+        const inside = dx * dx + dy * dy <= radiusSquared;
+        const keep = highPass ? !inside : inside;
+        if (keep) {
+          filteredReal[index] = shiftedReal[index];
+          filteredImag[index] = shiftedImag[index];
+          filteredCanvasReal[index] = shiftedReal[index];
+          filteredCanvasImag[index] = shiftedImag[index];
+        }
+      }
+    }
+
+    contexts.filtered.putImageData(spectrumMagnitude(filteredCanvasReal, filteredCanvasImag, magnitudeScale), 0, 0);
+    const [unshiftedReal, unshiftedImag] = uncenterSpectrum(filteredReal, filteredImag);
+    fft2d(unshiftedReal, unshiftedImag, true);
+    const pixels = new Uint8ClampedArray(PIXELS * 4);
+    for (let i = 0; i < PIXELS; i += 1) {
+      const value = Math.max(0, Math.min(255, unshiftedReal[i]));
+      const offset = i * 4;
+      pixels[offset] = value;
+      pixels[offset + 1] = value;
+      pixels[offset + 2] = value;
+      pixels[offset + 3] = 255;
+    }
+    contexts.reconstructed.putImageData(new ImageData(pixels, SIZE, SIZE), 0, 0);
+
+    radiusValue.value = `${radius} px`;
+    filterTag.textContent = highPass ? "HIGH-PASS" : "LOW-PASS";
+    filteredCaption.textContent = highPass
+      ? "Frequencies inside the radius are removed."
+      : "Frequencies outside the radius are removed.";
+  }
+
+  function processImage(image) {
+    scratchContext.clearRect(0, 0, SIZE, SIZE);
+    scratchContext.drawImage(image, 0, 0, SIZE, SIZE);
+    const imageData = scratchContext.getImageData(0, 0, SIZE, SIZE);
+    sourceReal = new Float64Array(PIXELS);
+    sourceImag = new Float64Array(PIXELS);
+    for (let i = 0; i < PIXELS; i += 1) {
+      const offset = i * 4;
+      sourceReal[i] = 0.299 * imageData.data[offset] + 0.587 * imageData.data[offset + 1] + 0.114 * imageData.data[offset + 2];
+      imageData.data[offset] = sourceReal[i];
+      imageData.data[offset + 1] = sourceReal[i];
+      imageData.data[offset + 2] = sourceReal[i];
+      imageData.data[offset + 3] = 255;
+    }
+    contexts.original.putImageData(imageData, 0, 0);
+    sourceImag.fill(0);
+    fft2d(sourceReal, sourceImag, false);
+    [shiftedReal, shiftedImag] = centerSpectrum(sourceReal, sourceImag);
+
+    let maxLog = 0;
+    for (let i = 0; i < PIXELS; i += 1) {
+      maxLog = Math.max(maxLog, Math.log1p(Math.hypot(shiftedReal[i], shiftedImag[i])));
+    }
+    magnitudeScale = maxLog || 1;
+    contexts.magnitude.putImageData(spectrumMagnitude(shiftedReal, shiftedImag, magnitudeScale), 0, 0);
+    drawPhase(shiftedReal, shiftedImag);
+    document.body.classList.add("has-image");
+    status.textContent = `${image.width} × ${image.height} image transformed to 256 × 256.`;
+    status.classList.remove("error");
+    applyFilter();
+  }
+
+  function loadFile(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      status.textContent = "Please choose a valid image file.";
+      status.classList.add("error");
+      return;
+    }
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      try {
+        processImage(image);
+      } catch (error) {
+        status.textContent = `Could not process this image: ${error.message}`;
+        status.classList.add("error");
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      status.textContent = "The selected file could not be decoded as an image.";
+      status.classList.add("error");
+    };
+    image.src = objectUrl;
+  }
+
+  input.addEventListener("change", () => loadFile(input.files[0]));
+  radiusSlider.addEventListener("input", applyFilter);
+  document.querySelectorAll('input[name="filter-mode"]').forEach((radio) => {
+    radio.addEventListener("change", applyFilter);
+  });
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.add("is-dragging");
+    });
+  });
+  ["dragleave", "drop"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.remove("is-dragging");
+    });
+  });
+  dropZone.addEventListener("drop", (event) => loadFile(event.dataTransfer.files[0]));
+})();
+    });
+    </script>
   </head>
   <body>
     <header class="site-header">
