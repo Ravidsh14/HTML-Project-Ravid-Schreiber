@@ -57,8 +57,8 @@ h1 span { color: #a4adbf; }
 .step-number { color: #687184; font: 10px var(--mono); }
 .card-heading h2 { overflow: hidden; margin: 0; font: 500 15px var(--display); text-overflow: ellipsis; white-space: nowrap; }
 .card-tag { flex: 0 0 auto; color: #8e97a9; font-size: 8px; }
-.canvas-wrap { position: relative; overflow: hidden; aspect-ratio: 1; border-radius: 7px; background: #10131b; }
-.canvas-wrap canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.canvas-wrap { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 7px; background: #10131b; }
+.canvas-wrap canvas { display: block; width: 100%; height: 100%; }
 .canvas-empty { position: absolute; inset: 0; display: grid; place-items: center; color: #596173; font: 10px var(--mono); }
 .has-image .canvas-empty { display: none; }
 .card-caption { min-height: 34px; margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }

@@ -29,24 +29,24 @@
           <input id="image-input" type="file" accept="image/*">
           <span class="upload-icon" aria-hidden="true">↑</span>
           <span class="upload-copy"><strong>Drop an image here</strong><span>or <span class="browse-link">browse files</span> · PNG, JPG, WEBP</span></span>
-          <span class="upload-size">256 × 256<br>GRAYSCALE</span>
+          <span class="upload-size">1920 × 1080<br>FULL HD</span>
         </label>
         <p class="status" id="status" role="status" aria-live="polite">Upload an image to begin exploring.</p>
 
         <div class="visualization-grid">
           <article class="visual-card">
             <div class="card-heading"><div><span class="step-number">01</span><h2>Input image</h2></div><span class="card-tag">SPATIAL</span></div>
-            <div class="canvas-wrap"><canvas id="original-canvas" width="256" height="256" aria-label="Resized grayscale input image"></canvas><div class="canvas-empty">Waiting for image</div></div>
-            <p class="card-caption">Resized to 256 × 256 and converted to grayscale.</p>
+            <div class="canvas-wrap"><canvas id="original-canvas" width="1920" height="1080" aria-label="Full HD grayscale input image"></canvas><div class="canvas-empty">Waiting for image</div></div>
+            <p class="card-caption">Scaled to 1920 × 1080 and converted to grayscale.</p>
           </article>
           <article class="visual-card">
             <div class="card-heading"><div><span class="step-number">02</span><h2>Magnitude</h2></div><span class="card-tag">AMPLITUDE</span></div>
-            <div class="canvas-wrap spectrum"><canvas id="magnitude-canvas" width="256" height="256" aria-label="Log-scaled magnitude spectrum"></canvas><div class="canvas-empty">Waiting for image</div></div>
+            <div class="canvas-wrap spectrum"><canvas id="magnitude-canvas" width="1920" height="1080" aria-label="Log-scaled magnitude spectrum"></canvas><div class="canvas-empty">Waiting for image</div></div>
             <p class="card-caption">Log-scaled strength of each frequency. Bright means strong.</p>
           </article>
           <article class="visual-card">
             <div class="card-heading"><div><span class="step-number">03</span><h2>Phase</h2></div><span class="card-tag">ANGLE</span></div>
-            <div class="canvas-wrap"><canvas id="phase-canvas" width="256" height="256" aria-label="Phase spectrum"></canvas><div class="canvas-empty">Waiting for image</div></div>
+            <div class="canvas-wrap"><canvas id="phase-canvas" width="1920" height="1080" aria-label="Phase spectrum"></canvas><div class="canvas-empty">Waiting for image</div></div>
             <p class="card-caption">Wave alignment, mapped from −π to π into grayscale.</p>
           </article>
         </div>
@@ -63,20 +63,20 @@
               <label><input type="radio" name="filter-mode" value="high"><span>High-pass</span></label>
             </fieldset>
             <label class="radius-control" for="radius-slider">
-              <span class="radius-label">Radius <output id="radius-value" for="radius-slider">64 px</output></span>
-              <input id="radius-slider" type="range" min="0" max="181" value="64" step="1">
-              <span class="range-ends"><span>0</span><span>181 px</span></span>
+              <span class="radius-label">Radius <output id="radius-value" for="radius-slider">480 px</output></span>
+              <input id="radius-slider" type="range" min="0" max="1358" value="480" step="1">
+              <span class="range-ends"><span>0</span><span>1358 px</span></span>
             </label>
           </div>
           <div class="filter-grid">
             <article class="visual-card">
               <div class="card-heading"><div><span class="step-number">04</span><h2>Filtered spectrum</h2></div><span class="card-tag" id="filter-tag">LOW-PASS</span></div>
-              <div class="canvas-wrap"><canvas id="filtered-canvas" width="256" height="256" aria-label="Filtered magnitude spectrum"></canvas><div class="canvas-empty">Waiting for image</div></div>
+              <div class="canvas-wrap"><canvas id="filtered-canvas" width="1920" height="1080" aria-label="Filtered magnitude spectrum"></canvas><div class="canvas-empty">Waiting for image</div></div>
               <p class="card-caption" id="filtered-caption">Frequencies outside the radius are removed.</p>
             </article>
             <article class="visual-card">
               <div class="card-heading"><div><span class="step-number">05</span><h2>Reconstructed image</h2></div><span class="card-tag">INVERSE FFT</span></div>
-              <div class="canvas-wrap"><canvas id="reconstructed-canvas" width="256" height="256" aria-label="Image reconstructed from the filtered spectrum"></canvas><div class="canvas-empty">Waiting for image</div></div>
+              <div class="canvas-wrap"><canvas id="reconstructed-canvas" width="1920" height="1080" aria-label="Image reconstructed from the filtered spectrum"></canvas><div class="canvas-empty">Waiting for image</div></div>
               <p class="card-caption">The inverse transform returns the filtered result to image space.</p>
             </article>
           </div>
@@ -86,7 +86,7 @@
       <section class="explanation" aria-labelledby="explanation-title">
         <div><p class="eyebrow">A QUICK FIELD GUIDE</p><h2 id="explanation-title">What are you looking at?</h2></div>
         <div class="explanation-copy">
-          <p>The <strong>2D Fourier Transform</strong> rewrites an image as a collection of repeating patterns, or spatial frequencies. Slow changes in brightness sit at low frequencies; fine edges and texture show up at high frequencies. This explorer computes the transform with a radix-2 FFT and moves zero frequency to the center.</p>
+          <p>The <strong>2D Fourier Transform</strong> rewrites an image as a collection of repeating patterns, or spatial frequencies. Slow changes in brightness sit at low frequencies; fine edges and texture show up at high frequencies. This explorer computes the transform with a mixed-radix FFT at Full HD resolution and moves zero frequency to the center.</p>
           <div class="guide-grid">
             <div><span class="guide-symbol magnitude-symbol" aria-hidden="true"></span><p><strong>Magnitude</strong> shows how much of each frequency is present. The center is the broad shapes; farther from it are finer details. Bright points indicate strong patterns.</p></div>
             <div><span class="guide-symbol phase-symbol" aria-hidden="true"></span><p><strong>Phase</strong> records where each wave lines up. It carries important structural information—without phase, the image cannot be reconstructed, even if its magnitude is preserved.</p></div>
